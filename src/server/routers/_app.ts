@@ -1,16 +1,96 @@
 import { z } from "zod";
-import { publicProcedure, router } from "../trpc";
+import { OAuth2Client } from "google-auth-library";
+import { publicProcedure, router, protectedProcedure } from "../trpc";
+import clientPromise from "../../db";
+import { createAccessToken, createRefreshToken } from "../../utils/context";
+import { ObjectId } from "mongodb";
+import envUser from "../model/envUser";
 
 export const appRouter = router({
-  hello: publicProcedure
+  helloMe: protectedProcedure.mutation(({ ctx }) => {
+    if (ctx.isOk === false)
+      return {
+        position: "not ok",
+      };
+    return {
+      position: "it's ok",
+    };
+  }),
+  Iam: protectedProcedure.query(async ({ ctx }) => {
+    if (ctx.isOk === false)
+      return {
+        isAuth: false,
+        user: null,
+      };
+    const db = await clientPromise;
+    const database = db.db("dbname");
+    const envStoreUser = database.collection("env-user");
+    let isUser = (await envStoreUser.findOne({
+      _id: new ObjectId(`${ctx.userId}`),
+    })) as envUser;
+
+    return {
+      user: isUser,
+      isAuth: ctx.isOk,
+    };
+  }),
+  checkUser: publicProcedure
     .input(
       z.object({
-        text: z.string().nullish(),
+        credential: z.string(),
       })
     )
-    .query(({ input }) => {
+    .mutation(async ({ input, ctx }) => {
+      async function verify(idToken: string) {
+        const client = new OAuth2Client();
+        const ticket = await client.verifyIdToken({
+          idToken,
+          audience: process.env.GOOGLE_CLIENT_ID,
+        });
+        return ticket.getPayload();
+      }
+      const payload = await verify(input.credential);
+
+      const db = await clientPromise;
+      const database = db.db("dbname");
+      const envStoreUser = database.collection("env-user");
+      const isUser = (await envStoreUser.findOne({
+        email: payload?.email,
+      })) as envUser;
+
+      // new User
+      let accessToken;
+      let user;
+      if (!isUser) {
+        const newUser = {
+          name: payload?.name,
+          email: payload?.email,
+          email_verified: payload?.email_verified,
+          picture: payload?.picture,
+        } as envUser;
+        user = await envStoreUser.insertOne(newUser);
+
+        const refreshToken = createRefreshToken(user.insertedId.toString());
+        ctx.res.setHeader(
+          "set-cookie",
+          `helloReturnBalak=${refreshToken}; path=/; samesite=lax; httponly;`
+        );
+        accessToken = createAccessToken(user.insertedId.toString());
+        return {
+          validUser: true,
+          accessToken,
+        };
+      }
+
+      if (isUser) accessToken = createAccessToken(isUser._id!.toString());
+      const refreshToken = createRefreshToken(isUser._id!.toString());
+      ctx.res.setHeader(
+        "set-cookie",
+        `helloReturnBalak=${refreshToken}; path=/; samesite=lax; httponly;`
+      );
       return {
-        greeting: `hello ${input?.text ?? "world"}`,
+        validUser: true,
+        accessToken,
       };
     }),
 });
