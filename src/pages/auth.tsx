@@ -15,7 +15,7 @@ interface res {
   credential: string;
 }
 
-const auth = () => {
+const Auth = () => {
   const googleSignInButton = useRef(null);
   const router = useRouter();
   const { mutate, data, isLoading, error } = trpc.checkUser.useMutation();
@@ -26,8 +26,7 @@ const auth = () => {
 
   const login = () => {
     window.google.accounts.id.initialize({
-      client_id:
-        "368662961806-c8f2hsectd7urdaiq24dr4n86scbda19.apps.googleusercontent.com",
+      client_id: process.env.GOOGLE_CLIENT_ID!,
       callback: onResponse,
     });
     window.google.accounts.id.renderButton(googleSignInButton.current, {
@@ -38,7 +37,6 @@ const auth = () => {
 
   if (isLoading) return <Loading />;
   if (data?.validUser) {
-    console.log("access token ", data.accessToken);
     setAccessToken(data.accessToken!);
     router.replace("/");
   }
@@ -64,4 +62,4 @@ const auth = () => {
   );
 };
 
-export default auth;
+export default Auth;
