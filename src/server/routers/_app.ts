@@ -1,43 +1,51 @@
 import { z } from "zod";
 import { OAuth2Client } from "google-auth-library";
-import { publicProcedure, router, protectedProcedure } from "../trpc";
+import {
+  publicProcedure,
+  router,
+  protectedProcedure,
+  userIsAuthProcedure,
+} from "../trpc";
 import clientPromise from "../../db";
 import { createAccessToken, createRefreshToken } from "../../utils/context";
 import { ObjectId } from "mongodb";
 import envUser from "../model/envUser";
+import { TRPCError } from "@trpc/server";
 
 export const appRouter = router({
-  helloMe: protectedProcedure.mutation(({ ctx }) => {
-    if (ctx.isOk === false)
-      return {
-        position: "not ok",
-      };
-    return {
-      position: "it's ok",
-    };
-  }),
   Iam: protectedProcedure.query(async ({ ctx }) => {
-    if (ctx.isOk === false)
-      return {
-        isAuth: false,
-        user: null,
-      };
     const db = await clientPromise;
     const database = db.db("dbname");
     const envStoreUser = database.collection("env-user");
     let isUser = (await envStoreUser.findOne({
       _id: new ObjectId(`${ctx.userId}`),
     })) as envUser;
-
+    let accessToken;
+    if (ctx.cAT) {
+      accessToken = createAccessToken(isUser._id!.toString());
+    }
+    if (ctx.rAT) {
+      const refreshToken = createRefreshToken(isUser._id!.toString());
+      ctx.res.setHeader(
+        "set-cookie",
+        `helloReturnBalak=${refreshToken}; path=/; samesite=lax; httponly;`
+      );
+    }
     return {
       user: isUser,
-      isAuth: ctx.isOk,
+      accessToken: accessToken,
+    };
+  }),
+  userIsAuth: userIsAuthProcedure.query(({ ctx }) => {
+    return {
+      userIsAuth: ctx.userIsAuth,
     };
   }),
   checkUser: publicProcedure
     .input(
       z.object({
         credential: z.string(),
+  
       })
     )
     .mutation(async ({ input, ctx }) => {

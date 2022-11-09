@@ -1,7 +1,6 @@
-import { TRPCError, initTRPC } from "@trpc/server";
+import { initTRPC, TRPCError } from "@trpc/server";
 import { Context } from "../pages/api/trpc/[trpc]";
 import { verify } from "jsonwebtoken";
-import { jwtPayload } from "../../types";
 
 // Avoid exporting the entire t-object since it's not very
 // descriptive and can be confusing to newcomers used to t
@@ -18,41 +17,87 @@ export const publicProcedure = t.procedure;
  **/
 const isAuthed = t.middleware(({ next, ctx }) => {
   const access = ctx.session.headers["authorization"];
-
+  const refresh = ctx.session.cookies["helloReturnBalak"];
+  let Apayload: any;
+  let Rpayload: any;
   if (access) {
     try {
-      const Apayload: any = verify(access!, process.env.ACCESS_TOKEN_SECRET!);
-      return next({
-        ctx: {
-          userId: Apayload.userId,
-          isOk: true,
-        },
-      });
-    } catch (error) {
-    }
+      Apayload = verify(access!, process.env.ACCESS_TOKEN_SECRET!);
+    } catch (error) {}
   }
 
-  const refresh = ctx.session.cookies["helloReturnBalak"];
-  
   if (refresh) {
     try {
-      const Rpayload: any = verify(refresh!, process.env.REFRESH_TOKEN_SECRET!);
-      return next({
-        ctx: {
-          userId: Rpayload.userId,
-          isOk: true,
-        },
-      });
+      Rpayload = verify(refresh!, process.env.REFRESH_TOKEN_SECRET!);
     } catch (error) {}
+  }
+
+  if (Apayload && Rpayload) {
+    return next({
+      ctx: {
+        userId: Apayload.userId as string,
+        cAT: false,
+        rAT: false,
+      },
+    });
+  }
+
+  if (!Apayload && Rpayload) {
+    return next({
+      ctx: {
+        userId: Rpayload.userId as string,
+        cAT: true,
+        rAT: false,
+      },
+    });
+  }
+
+  if (Apayload && !Rpayload) {
+    return next({
+      ctx: {
+        userId: Apayload.userId as string,
+        rAT: true,
+        cAT: false,
+      },
+    });
+  }
+
+  throw new TRPCError({
+    code: "UNAUTHORIZED",
+  });
+});
+
+const userIsAuth = t.middleware(({ next, ctx }) => {
+  const access = ctx.session.headers["authorization"];
+  const refresh = ctx.session.cookies["helloReturnBalak"];
+  let Apayload: any;
+  let Rpayload: any;
+  if (access) {
+    try {
+      Apayload = verify(access!, process.env.ACCESS_TOKEN_SECRET!);
+    } catch (error) {}
+  }
+
+  if (refresh) {
+    try {
+      Rpayload = verify(refresh!, process.env.REFRESH_TOKEN_SECRET!);
+    } catch (error) {}
+  }
+
+  if (Apayload || Rpayload) {
+    return next({
+      ctx: {
+        userIsAuth: true,
+      },
+    });
   }
 
   return next({
     ctx: {
-      isOk: false,
-      userId: null,
+      userIsAuth: false,
     },
   });
 });
-
 // Protected procedures for logged in users only
 export const protectedProcedure = t.procedure.use(isAuthed);
+export const userIsAuthProcedure = t.procedure.use(userIsAuth);
