@@ -28,7 +28,7 @@ const Auth: NextPage = () => {
 
   const login = () => {
     window.google.accounts.id.initialize({
-      client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!,
+      client_id: "368662961806-c8f2hsectd7urdaiq24dr4n86scbda19.apps.googleusercontent.com",
       callback: onResponse,
     });
     window.google.accounts.id.renderButton(googleSignInButton.current, {
