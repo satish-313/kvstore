@@ -10,7 +10,6 @@ import clientPromise from "../../db";
 import { createAccessToken, createRefreshToken } from "../../utils/context";
 import { ObjectId } from "mongodb";
 import envUser from "../model/envUser";
-import { TRPCError } from "@trpc/server";
 
 export const appRouter = router({
   Iam: protectedProcedure.query(async ({ ctx }) => {
@@ -45,7 +44,6 @@ export const appRouter = router({
     .input(
       z.object({
         credential: z.string(),
-  
       })
     )
     .mutation(async ({ input, ctx }) => {

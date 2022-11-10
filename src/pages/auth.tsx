@@ -3,6 +3,7 @@ import { useRouter } from "next/router";
 import { trpc } from "../utils/trpc";
 import { Loading } from "../components";
 import { setAccessToken } from "../utils/context";
+import { GetServerSideProps, NextPage } from "next";
 
 declare const window: Window &
   typeof globalThis & {
@@ -15,9 +16,10 @@ interface res {
   credential: string;
 }
 
-const Auth = () => {
+const Auth: NextPage = () => {
   const googleSignInButton = useRef(null);
   const router = useRouter();
+  const userIsAuth = trpc.userIsAuth.useQuery();
   const checkUser = trpc.checkUser.useMutation();
 
   const onResponse = async (res: res) => {
@@ -35,12 +37,13 @@ const Auth = () => {
     });
   };
 
-  if (checkUser.isLoading) return <Loading />;
   if (checkUser.data?.validUser) {
     setAccessToken(checkUser.data.accessToken!);
     router.push("/");
   }
-
+  if (userIsAuth.data?.userIsAuth) {
+    router.push("/");
+  }
   useEffect(() => {
     if (window && document) {
       const script = document.createElement("script");
@@ -53,6 +56,7 @@ const Auth = () => {
     }
   }, []);
 
+  if (checkUser.isLoading) return <Loading />;
   return (
     <div className="flex flex-col justify-center items-center">
       <div className="p-8" />
