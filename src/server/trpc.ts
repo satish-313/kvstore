@@ -38,6 +38,7 @@ const isAuthed = t.middleware(({ next, ctx }) => {
         userId: Apayload.userId as string,
         cAT: false,
         rAT: false,
+        isAuth: true
       },
     });
   }
@@ -48,6 +49,7 @@ const isAuthed = t.middleware(({ next, ctx }) => {
         userId: Rpayload.userId as string,
         cAT: true,
         rAT: false,
+        isAuth: true
       },
     });
   }
@@ -58,13 +60,19 @@ const isAuthed = t.middleware(({ next, ctx }) => {
         userId: Apayload.userId as string,
         rAT: true,
         cAT: false,
+        isAuth: true
       },
     });
   }
 
-  throw new TRPCError({
-    code: "UNAUTHORIZED",
-  });
+  return next({
+    ctx : {
+      userId: "" as string,
+      rAT: false,
+      cAT: false,
+      isAuth: false
+    }
+  })
 });
 
 const userIsAuth = t.middleware(({ next, ctx }) => {

@@ -3,7 +3,8 @@ import { useRouter } from "next/router";
 import { trpc } from "../utils/trpc";
 import { Loading } from "../components";
 import { setAccessToken } from "../utils/context";
-import { GetServerSideProps, NextPage } from "next";
+import { NextPage } from "next";
+import Head from "next/head";
 
 declare const window: Window &
   typeof globalThis & {
@@ -59,6 +60,9 @@ const Auth: NextPage = () => {
   if (checkUser.isLoading) return <Loading />;
   return (
     <div className="flex flex-col justify-center items-center">
+      <Head>
+        <title>auth</title>
+      </Head>
       <div className="p-8" />
       <div className="border border-red-400 w-60 rounded-lg shadow flex flex-col items-center py-2">
         <img className="h-16 w-16" src="/user.png" alt="" />

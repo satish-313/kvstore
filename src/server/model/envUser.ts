@@ -1,11 +1,24 @@
 import { ObjectId } from "mongodb";
 
-export default class envUser {
+export class envUser {
   constructor(
     public name: string,
     public email: string,
     public email_verified: boolean,
     public picture: string,
+    public _id?: ObjectId
+  ) {}
+}
+
+interface secretType {
+  [key: string]: string;
+}
+
+export class envProject {
+  constructor(
+    public projectName: string,
+    public githubName?: string,
+    public secrets?: secretType[],
     public _id?: ObjectId
   ) {}
 }

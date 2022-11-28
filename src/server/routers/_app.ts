@@ -9,16 +9,25 @@ import {
 import clientPromise from "../../db";
 import { createAccessToken, createRefreshToken } from "../../utils/context";
 import { ObjectId } from "mongodb";
-import envUser from "../model/envUser";
+import { envUser,envProject } from "../model/envUser";
 
 export const appRouter = router({
   Iam: protectedProcedure.query(async ({ ctx }) => {
+    if (!ctx.isAuth) {
+      return {
+        user: null,
+        accessToken: null,
+        isAuth: false,
+      };
+    }
+
     const db = await clientPromise;
     const database = db.db("dbname");
     const envStoreUser = database.collection("env-user");
     let isUser = (await envStoreUser.findOne({
       _id: new ObjectId(`${ctx.userId}`),
     })) as envUser;
+
     let accessToken;
     if (ctx.cAT) {
       accessToken = createAccessToken(isUser._id!.toString());
@@ -27,13 +36,35 @@ export const appRouter = router({
       const refreshToken = createRefreshToken(isUser._id!.toString());
       ctx.res.setHeader(
         "set-cookie",
-        `helloReturnBalak=${refreshToken}; path=/; samesite=lax; httponly;`
+        `helloReturnBalak=${refreshToken}; path=/; samesite=Strict; httponly;`
       );
     }
+
     return {
       user: isUser,
       accessToken: accessToken,
+      isAuth: ctx.isAuth,
     };
+  }),
+  addProject: protectedProcedure.input(z.object({
+    projectName : z.string(),
+    githubName : z.string().nullable(),
+    secrets : z.map(z.string(),z.string()).array().nullable(),
+    _id : z.string().nullable()
+  })).mutation(async ({ctx,input}) => {
+    if(!ctx.isAuth) {
+      return {
+        isAuth: false
+      }
+    }
+    console.log("hello")
+    return {
+      hello : "hello"
+    }
+    // const db = await clientPromise;
+    // const database = db.db("dbname");
+    // const envStoreProject = database.collection("env-project");
+    // const isProject = (await envStoreProject.findOne({_id: new ObjectId(input._id!)}))
   }),
   userIsAuth: userIsAuthProcedure.query(({ ctx }) => {
     return {
@@ -65,6 +96,7 @@ export const appRouter = router({
       })) as envUser;
 
       // new User
+      let maxAge = 7 * 86400;
       let accessToken;
       let user;
       if (!isUser) {
@@ -79,7 +111,7 @@ export const appRouter = router({
         const refreshToken = createRefreshToken(user.insertedId.toString());
         ctx.res.setHeader(
           "set-cookie",
-          `helloReturnBalak=${refreshToken}; path=/; samesite=lax; httponly;`
+          `helloReturnBalak=${refreshToken}; path=/; samesite=Strict; httponly; max-age=${maxAge}; secure;`
         );
         accessToken = createAccessToken(user.insertedId.toString());
         return {
@@ -92,8 +124,9 @@ export const appRouter = router({
       const refreshToken = createRefreshToken(isUser._id!.toString());
       ctx.res.setHeader(
         "set-cookie",
-        `helloReturnBalak=${refreshToken}; path=/; samesite=lax; httponly;`
+        `helloReturnBalak=${refreshToken}; path=/; samesite=Strict; httponly; max-age=${maxAge}; secure;`
       );
+
       return {
         validUser: true,
         accessToken,

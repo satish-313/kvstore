@@ -9,7 +9,7 @@ const Header = () => {
         </Link>
         <div className="flex items-center space-x-4">
           <img className="cursor-pointer h-10 w-10 md:h-16 md:w-16" src="/user.png" alt="use" />
-          <span className="text-sm md:text-md font-semibold cursor-pointer">Logout</span>
+          {/* <span className="text-sm md:text-md font-semibold cursor-pointer">Logout</span> */}
         </div>
       </div>
     </header>
