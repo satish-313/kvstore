@@ -6,14 +6,16 @@ import {
   FormEvent,
   useCallback,
   ChangeEvent,
-  SyntheticEvent,
 } from "react";
 
-interface secretType {
+type secretType = {
   [key: string]: string;
-}
+};
 
-const MainModal: FC<{ modalToggle: () => void}> = ({ modalToggle }) => {
+const MainModal: FC<{
+  modalToggle: () => void;
+  addProject: (data: any) => void;
+}> = ({ modalToggle, addProject }) => {
   const [close, setClose] = useState(false);
   const [secrets, setSecrets] = useState<secretType[]>([]);
   const ModalBackground = useRef(null);
@@ -33,25 +35,25 @@ const MainModal: FC<{ modalToggle: () => void}> = ({ modalToggle }) => {
   };
 
   const secretChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const obj = e.currentTarget.dataset
-    const keyType  = Object.keys(obj)[0]
+    const obj = e.currentTarget.dataset;
+    const keyType = Object.keys(obj)[0];
 
-    if (keyType === "key"){
-      const idx = parseInt(obj.key!)
-      const key = e.target.value
-      const s : secretType = {}
-      s[key] = secrets[idx].key ? secrets[idx].key : ""
-      secrets[idx] = s
-      setSecrets([...secrets])
-    }else if(keyType === "secret") {
-      const idx = parseInt(obj.secret!)
-      const value = e.target.value
-      const s : secretType = {}
-      const key = Object.keys(secrets[idx])[0]
+    if (keyType === "key") {
+      const idx = parseInt(obj.key!);
+      const key = e.target.value;
+      const s: secretType = {};
+      s[key] = secrets[idx].key ? secrets[idx].key : "";
+      secrets[idx] = s;
+      setSecrets([...secrets]);
+    } else if (keyType === "secret") {
+      const idx = parseInt(obj.secret!);
+      const value = e.target.value;
+      const s: secretType = {};
+      const key = Object.keys(secrets[idx])[0];
       if (key === undefined) return
-      s[key] = value
-      secrets[idx] = s
-      setSecrets([...secrets])
+      s[key] = value;
+      secrets[idx] = s;
+      setSecrets([...secrets]);
     }
   };
 
@@ -63,11 +65,9 @@ const MainModal: FC<{ modalToggle: () => void}> = ({ modalToggle }) => {
     e.preventDefault();
     const pName = projectName.current?.value;
     const gName = githubName.current?.value;
-
-    console.log(pName, gName, secrets);
-
-    if (projectName.current) projectName.current.value = "";
-    if (githubName.current) githubName.current.value = "";
+    const data = { githubName: gName, projectName: pName, secrets, _id: null };
+    addProject(data);
+    closeHelper();
   };
 
   return (

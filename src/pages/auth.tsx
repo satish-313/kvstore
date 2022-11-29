@@ -2,7 +2,7 @@ import { useRef, useEffect } from "react";
 import { useRouter } from "next/router";
 import { trpc } from "../utils/trpc";
 import { Loading } from "../components";
-import { setAccessToken } from "../utils/context";
+import { getAccessToken, setAccessToken } from "../utils/context";
 import { NextPage } from "next";
 import Head from "next/head";
 
@@ -29,7 +29,8 @@ const Auth: NextPage = () => {
 
   const login = () => {
     window.google.accounts.id.initialize({
-      client_id: "368662961806-c8f2hsectd7urdaiq24dr4n86scbda19.apps.googleusercontent.com",
+      client_id:
+        "368662961806-c8f2hsectd7urdaiq24dr4n86scbda19.apps.googleusercontent.com",
       callback: onResponse,
     });
     window.google.accounts.id.renderButton(googleSignInButton.current, {
@@ -38,13 +39,6 @@ const Auth: NextPage = () => {
     });
   };
 
-  if (checkUser.data?.validUser) {
-    setAccessToken(checkUser.data.accessToken!);
-    router.push("/");
-  }
-  if (userIsAuth.data?.userIsAuth) {
-    router.push("/");
-  }
   useEffect(() => {
     if (window && document) {
       const script = document.createElement("script");
@@ -58,6 +52,13 @@ const Auth: NextPage = () => {
   }, []);
 
   if (checkUser.isLoading) return <Loading />;
+  if (checkUser.data?.validUser) {
+    setAccessToken(checkUser.data.accessToken!);
+    router.reload();
+  }
+  if (userIsAuth.data?.userIsAuth) {
+    router.push("/");
+  }
   return (
     <div className="flex flex-col justify-center items-center">
       <Head>

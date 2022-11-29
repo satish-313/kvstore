@@ -9,14 +9,14 @@ import {
 import clientPromise from "../../db";
 import { createAccessToken, createRefreshToken } from "../../utils/context";
 import { ObjectId } from "mongodb";
-import { envUser,envProject } from "../model/envUser";
+import { envUser, envProject } from "../model/envUser";
 
 export const appRouter = router({
   Iam: protectedProcedure.query(async ({ ctx }) => {
     if (!ctx.isAuth) {
       return {
         user: null,
-        accessToken: null,
+        accessToken: undefined,
         isAuth: false,
       };
     }
@@ -24,16 +24,30 @@ export const appRouter = router({
     const db = await clientPromise;
     const database = db.db("dbname");
     const envStoreUser = database.collection("env-user");
-    let isUser = (await envStoreUser.findOne({
-      _id: new ObjectId(`${ctx.userId}`),
-    })) as envUser;
+    let user;
 
-    let accessToken;
+    let test = envStoreUser.aggregate([
+      {
+        $match: { _id: new ObjectId(ctx.userId) },
+      },
+      {
+        $lookup: {
+          from: "env-project",
+          localField: "_id",
+          foreignField: "clientId",
+          as: "projects",
+        },
+      },
+    ]);
+    const allUser = await test.toArray();
+    user = allUser[0] as envUser;
+
+    let accessToken = "";
     if (ctx.cAT) {
-      accessToken = createAccessToken(isUser._id!.toString());
+      accessToken = createAccessToken(user._id!.toString());
     }
     if (ctx.rAT) {
-      const refreshToken = createRefreshToken(isUser._id!.toString());
+      const refreshToken = createRefreshToken(user._id!.toString());
       ctx.res.setHeader(
         "set-cookie",
         `helloReturnBalak=${refreshToken}; path=/; samesite=Strict; httponly;`
@@ -41,31 +55,74 @@ export const appRouter = router({
     }
 
     return {
-      user: isUser,
+      user,
       accessToken: accessToken,
       isAuth: ctx.isAuth,
     };
   }),
-  addProject: protectedProcedure.input(z.object({
-    projectName : z.string(),
-    githubName : z.string().nullable(),
-    secrets : z.map(z.string(),z.string()).array().nullable(),
-    _id : z.string().nullable()
-  })).mutation(async ({ctx,input}) => {
-    if(!ctx.isAuth) {
-      return {
-        isAuth: false
+  addProject: protectedProcedure
+    .input(
+      z.object({
+        projectName: z.string(),
+        githubName: z.string().nullable(),
+        secrets: z.record(z.string(), z.string()).array().nullable(),
+        _id: z.string().nullable(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      if (!ctx.isAuth) {
+        return {
+          isAuth: false,
+        };
       }
-    }
-    console.log("hello")
-    return {
-      hello : "hello"
-    }
-    // const db = await clientPromise;
-    // const database = db.db("dbname");
-    // const envStoreProject = database.collection("env-project");
-    // const isProject = (await envStoreProject.findOne({_id: new ObjectId(input._id!)}))
-  }),
+
+      const { _id, secrets, projectName, githubName } = input;
+
+      const db = await clientPromise;
+      const database = db.db("dbname");
+      const envStoreProject = database.collection("env-project");
+
+      if (input._id === null) {
+        const newProject = {
+          projectName,
+          clientId: new ObjectId(ctx.userId),
+          githubName,
+          secrets,
+        } as envProject;
+
+        try {
+          await envStoreProject.insertOne(newProject);
+        } catch (error) {
+          console.log(error);
+        }
+      }
+
+      return {
+        ok: "success",
+      };
+    }),
+  deleteProject: protectedProcedure
+    .input(
+      z.object({
+        _id: z.string(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const { _id } = input;
+      const db = await clientPromise;
+      const database = db.db("dbname");
+      const envStoreProject = database.collection("env-project");
+
+      try {
+        await envStoreProject.deleteOne({ _id: new ObjectId(_id) });
+      } catch (error) {
+        console.log(error);
+      }
+
+      return {
+        ok : "success"
+      }
+    }),
   userIsAuth: userIsAuthProcedure.query(({ ctx }) => {
     return {
       userIsAuth: ctx.userIsAuth,
@@ -134,5 +191,4 @@ export const appRouter = router({
     }),
 });
 
-// export type definition of API
 export type AppRouter = typeof appRouter;

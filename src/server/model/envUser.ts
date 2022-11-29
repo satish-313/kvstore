@@ -6,7 +6,8 @@ export class envUser {
     public email: string,
     public email_verified: boolean,
     public picture: string,
-    public _id?: ObjectId
+    public _id?: ObjectId,
+    public projects? : envProject[]
   ) {}
 }
 
@@ -17,6 +18,7 @@ interface secretType {
 export class envProject {
   constructor(
     public projectName: string,
+    public clientId: ObjectId,
     public githubName?: string,
     public secrets?: secretType[],
     public _id?: ObjectId
