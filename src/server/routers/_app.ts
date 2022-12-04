@@ -82,7 +82,7 @@ export const appRouter = router({
       const database = db.db("dbname");
       const envStoreProject = database.collection("env-project");
 
-      if (input._id === null) {
+      if (_id === null) {
         const newProject = {
           projectName,
           clientId: new ObjectId(ctx.userId),
@@ -95,6 +95,20 @@ export const appRouter = router({
         } catch (error) {
           console.log(error);
         }
+      } else {
+        const updateProject = {
+          projectName,
+          clientId: new ObjectId(ctx.userId),
+          githubName,
+          secrets,
+        } as envProject;
+
+        try {
+          const p = await envStoreProject.updateOne(
+            { _id: new ObjectId(_id) },
+            { $set: updateProject }
+          );
+        } catch (error) {}
       }
 
       return {
@@ -107,21 +121,21 @@ export const appRouter = router({
         _id: z.string(),
       })
     )
-    .mutation(async ({ ctx, input }) => {
+    .mutation(async ({ input }) => {
       const { _id } = input;
       const db = await clientPromise;
       const database = db.db("dbname");
       const envStoreProject = database.collection("env-project");
-
+      let project;
       try {
-        await envStoreProject.deleteOne({ _id: new ObjectId(_id) });
+        project = await envStoreProject.deleteOne({ _id: new ObjectId(_id) });
       } catch (error) {
         console.log(error);
       }
 
       return {
-        ok : "success"
-      }
+        ok: "success",
+      };
     }),
   userIsAuth: userIsAuthProcedure.query(({ ctx }) => {
     return {

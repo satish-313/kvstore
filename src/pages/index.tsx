@@ -29,8 +29,8 @@ const Home: NextPage = () => {
     AddProject.mutate(data);
   };
 
-  const deleteProject = (data: any) => {
-    DeleteProject.mutate(data)
+  const deleteProject = (_id: any) => {
+    DeleteProject.mutate({ _id });
   };
 
   if (Iam.isError) {
@@ -74,11 +74,12 @@ const Home: NextPage = () => {
             {toggle ? (
               <MainModal modalToggle={modalToggle} addProject={addProject} />
             ) : null}
-            <hr className="mt-2" />
+            <hr className="my-2" />
 
-            <div className="py-2" />
             <div className="border rounded-lg drop-shadow-lg mb-3">
-              <Projects projects={Iam.data.user?.projects} />
+              {Iam.data.user?.projects?.map((p, idx) => (
+                <Projects key={idx} p={p} deleteProject={deleteProject} />
+              ))}
             </div>
           </div>
         </>

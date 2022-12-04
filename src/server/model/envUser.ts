@@ -11,8 +11,8 @@ export class envUser {
   ) {}
 }
 
-interface secretType {
-  [key: string]: string;
+export interface secretType {
+  [key: string] : string;
 }
 
 export class envProject {
