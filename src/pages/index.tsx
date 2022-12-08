@@ -3,7 +3,6 @@ import type { NextPage } from "next";
 import Head from "next/head";
 import { useRouter } from "next/router";
 import { Loading, MainModal, Projects } from "../components";
-import { setAccessToken } from "../utils/context";
 import { trpc } from "../utils/trpc";
 
 const Home: NextPage = () => {
@@ -38,16 +37,11 @@ const Home: NextPage = () => {
   }
 
   if (Iam.data?.isAuth === false) {
+    // console.log(Iam.data, "index.tsx")
     router.replace("/auth");
   }
 
   if (Iam.isLoading) return <Loading />;
-  if (Iam.data?.accessToken) {
-    const AT = Iam.data.accessToken;
-    if (AT.length > 1) {
-      setAccessToken(Iam.data?.accessToken);
-    }
-  }
 
   return (
     <div>

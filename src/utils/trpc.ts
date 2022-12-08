@@ -1,9 +1,10 @@
 import { httpBatchLink } from "@trpc/client";
 import { createTRPCNext } from "@trpc/next";
 import type { AppRouter } from "../server/routers/_app";
-import { getAccessToken } from "./context";
+import { getAccessToken, setAccessToken } from "./context";
+import jwtDecode from "jwt-decode";
 
-function getBaseUrl() {
+export function getBaseUrl() {
   if (typeof window !== "undefined")
     // browser should use relative path
     return "";
@@ -25,23 +26,35 @@ export const trpc = createTRPCNext<AppRouter>({
     return {
       links: [
         httpBatchLink({
-          /**
-           * If you want to use SSR, you need to use the server's full URL
-           * @link https://trpc.io/docs/ssr
-           **/
           url: `${getBaseUrl()}/api/trpc`,
-          headers: () => ({ Authorization: getAccessToken() }),
+          headers: async () => {
+            let accessToken = getAccessToken("trpc context");
+
+            if (accessToken === "FirstTime") {
+              const url = getBaseUrl();
+              const res = await fetch(`${url}/api/refresh_token`);
+              accessToken = await res.text();
+              setAccessToken(accessToken, "firt time");
+            }
+            try {
+              const res: any = jwtDecode(accessToken);
+              if (Date.now() >= res.exp * 1000) {
+                const url = getBaseUrl();
+                const res = await fetch(`${url}/api/refresh_token`);
+                accessToken = await res.text();
+                setAccessToken(accessToken, "expire time time");
+              }
+            } catch (error) {
+              console.log("error trpc util ", error);
+            }
+
+            return {
+              Authorization: accessToken,
+            };
+          },
         }),
       ],
-      /**
-       * @link https://tanstack.com/query/v4/docs/reference/QueryClient
-       **/
-      // queryClientConfig: { defaultOptions: { queries: { staleTime: 60 } } },
     };
   },
-  /**
-   * @link https://trpc.io/docs/ssr
-   **/
   ssr: false,
 });
-// => { useQuery: ..., useMutation: ...}

@@ -1,4 +1,4 @@
-import { initTRPC, TRPCError } from "@trpc/server";
+import { initTRPC } from "@trpc/server";
 import { Context } from "../pages/api/trpc/[trpc]";
 import { verify } from "jsonwebtoken";
 
@@ -17,82 +17,43 @@ export const publicProcedure = t.procedure;
  **/
 const isAuthed = t.middleware(({ next, ctx }) => {
   const access = ctx.session.headers["authorization"];
-  const refresh = ctx.session.cookies["helloReturnBalak"];
   let Apayload: any;
-  let Rpayload: any;
+
   if (access) {
     try {
       Apayload = verify(access!, process.env.ACCESS_TOKEN_SECRET!);
     } catch (error) {}
   }
 
-  if (refresh) {
-    try {
-      Rpayload = verify(refresh!, process.env.REFRESH_TOKEN_SECRET!);
-    } catch (error) {}
-  }
-
-  if (Apayload && Rpayload) {
+  if (Apayload) {
     return next({
       ctx: {
         userId: Apayload.userId as string,
-        cAT: false,
-        rAT: false,
-        isAuth: true
-      },
-    });
-  }
-
-  if (!Apayload && Rpayload) {
-    return next({
-      ctx: {
-        userId: Rpayload.userId as string,
-        cAT: true,
-        rAT: false,
-        isAuth: true
-      },
-    });
-  }
-
-  if (Apayload && !Rpayload) {
-    return next({
-      ctx: {
-        userId: Apayload.userId as string,
-        rAT: true,
-        cAT: false,
-        isAuth: true
+        isAuth: true,
       },
     });
   }
 
   return next({
-    ctx : {
+    ctx: {
       userId: "" as string,
-      rAT: false,
-      cAT: false,
-      isAuth: false
-    }
-  })
+      isAuth: false,
+    },
+  });
 });
 
 const userIsAuth = t.middleware(({ next, ctx }) => {
   const access = ctx.session.headers["authorization"];
-  const refresh = ctx.session.cookies["helloReturnBalak"];
   let Apayload: any;
   let Rpayload: any;
+
   if (access) {
     try {
       Apayload = verify(access!, process.env.ACCESS_TOKEN_SECRET!);
     } catch (error) {}
   }
 
-  if (refresh) {
-    try {
-      Rpayload = verify(refresh!, process.env.REFRESH_TOKEN_SECRET!);
-    } catch (error) {}
-  }
-
-  if (Apayload || Rpayload) {
+  if (Apayload) {
     return next({
       ctx: {
         userIsAuth: true,

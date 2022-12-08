@@ -16,7 +16,6 @@ export const appRouter = router({
     if (!ctx.isAuth) {
       return {
         user: null,
-        accessToken: undefined,
         isAuth: false,
       };
     }
@@ -42,21 +41,8 @@ export const appRouter = router({
     const allUser = await test.toArray();
     user = allUser[0] as envUser;
 
-    let accessToken = "";
-    if (ctx.cAT) {
-      accessToken = createAccessToken(user._id!.toString());
-    }
-    if (ctx.rAT) {
-      const refreshToken = createRefreshToken(user._id!.toString());
-      ctx.res.setHeader(
-        "set-cookie",
-        `helloReturnBalak=${refreshToken}; path=/; samesite=Strict; httponly;`
-      );
-    }
-
     return {
       user,
-      accessToken: accessToken,
       isAuth: ctx.isAuth,
     };
   }),
@@ -92,9 +78,7 @@ export const appRouter = router({
 
         try {
           await envStoreProject.insertOne(newProject);
-        } catch (error) {
-          console.log(error);
-        }
+        } catch (error) {}
       } else {
         const updateProject = {
           projectName,
@@ -129,9 +113,7 @@ export const appRouter = router({
       let project;
       try {
         project = await envStoreProject.deleteOne({ _id: new ObjectId(_id) });
-      } catch (error) {
-        console.log(error);
-      }
+      } catch (error) {}
 
       return {
         ok: "success",
@@ -186,7 +168,6 @@ export const appRouter = router({
         );
         accessToken = createAccessToken(user.insertedId.toString());
         return {
-          validUser: true,
           accessToken,
         };
       }
@@ -199,7 +180,6 @@ export const appRouter = router({
       );
 
       return {
-        validUser: true,
         accessToken,
       };
     }),

@@ -2,7 +2,7 @@ import { useRef, useEffect } from "react";
 import { useRouter } from "next/router";
 import { trpc } from "../utils/trpc";
 import { Loading } from "../components";
-import { getAccessToken, setAccessToken } from "../utils/context";
+import { setAccessToken } from "../utils/context";
 import { NextPage } from "next";
 import Head from "next/head";
 
@@ -21,7 +21,12 @@ const Auth: NextPage = () => {
   const googleSignInButton = useRef(null);
   const router = useRouter();
   const userIsAuth = trpc.userIsAuth.useQuery();
-  const checkUser = trpc.checkUser.useMutation();
+  const checkUser = trpc.checkUser.useMutation({
+    onSuccess(data) {
+      // setAccessToken(data.accessToken!);
+      // router.replace("/")
+    },
+  });
 
   const onResponse = async (res: res) => {
     checkUser.mutate({ credential: res.credential });
@@ -52,13 +57,12 @@ const Auth: NextPage = () => {
   }, []);
 
   if (checkUser.isLoading) return <Loading />;
-  if (checkUser.data?.validUser) {
-    setAccessToken(checkUser.data.accessToken!);
-    router.reload();
-  }
+
   if (userIsAuth.data?.userIsAuth) {
-    router.push("/");
+    // console.log(userIsAuth.data, "Auth.tsx")
+    router.replace("/");
   }
+
   return (
     <div className="flex flex-col justify-center items-center">
       <Head>
