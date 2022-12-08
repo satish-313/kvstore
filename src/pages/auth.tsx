@@ -23,12 +23,12 @@ const Auth: NextPage = () => {
   const userIsAuth = trpc.userIsAuth.useQuery();
   const checkUser = trpc.checkUser.useMutation({
     onSuccess(data) {
-      // setAccessToken(data.accessToken!);
-      // router.replace("/")
+      setAccessToken(data.accessToken!,"after google login");
+      router.push("/")
     },
   });
 
-  const onResponse = async (res: res) => {
+  const onResponse = (res: res) => {
     checkUser.mutate({ credential: res.credential });
   };
 
@@ -60,7 +60,7 @@ const Auth: NextPage = () => {
 
   if (userIsAuth.data?.userIsAuth) {
     // console.log(userIsAuth.data, "Auth.tsx")
-    router.replace("/");
+    router.push("/");
   }
 
   return (

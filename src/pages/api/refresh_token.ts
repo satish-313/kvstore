@@ -6,11 +6,15 @@ export default function (req: NextApiRequest, res: NextApiResponse) {
   const refresh = req.cookies["helloReturnBalak"];
   let Rpayload: any;
 
+  if (!refresh) {
+    return res.send("no error")
+  }
+
   if (refresh) {
     try {
       Rpayload = verify(refresh!, process.env.REFRESH_TOKEN_SECRET!);
     } catch (error) {
-      return res.send("")
+      return res.status(401).json("error no cookie")
     }
   }
   
