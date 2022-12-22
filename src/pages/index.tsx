@@ -87,7 +87,7 @@ const Home: NextPage = () => {
           </h3>
           <div className="grid grid-cols-4 gap-10">
             <p className="mt-4 font-semibold text-green-700 col-span-4 sm:col-span-3">
-              Hey, fellow it's an free and opensource site to store your
+              Hey, fellow it&apos;s an free and opensource site to store your
               sensetive environment variable without any worries. I garrenty
               full security. You can store variable similar to .env file
             </p>
