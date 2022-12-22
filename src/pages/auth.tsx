@@ -1,4 +1,4 @@
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import { trpc } from "../utils/trpc";
 import { Loading } from "../components";
@@ -23,8 +23,7 @@ const Auth: NextPage = () => {
   const userIsAuth = trpc.userIsAuth.useQuery();
   const checkUser = trpc.checkUser.useMutation({
     onSuccess(data) {
-      setAccessToken(data.accessToken!,"after google login");
-      router.push("/")
+      setAccessToken(data.accessToken!, "after google login");
     },
   });
 
@@ -56,26 +55,31 @@ const Auth: NextPage = () => {
     }
   }, []);
 
-  if (checkUser.isLoading) return <Loading />;
-
   if (userIsAuth.data?.userIsAuth) {
-    // console.log(userIsAuth.data, "Auth.tsx")
-    router.push("/");
+    console.log(userIsAuth.data, "Auth.tsx");
+    router.replace("/")
   }
+
+  if (checkUser.isLoading) return <Loading />;
 
   return (
     <div className="flex flex-col justify-center items-center">
       <Head>
         <title>auth</title>
       </Head>
-      <div className="p-8" />
-      <div className="border border-red-400 w-60 rounded-lg shadow flex flex-col items-center py-2">
-        <img className="h-16 w-16" src="/user.png" alt="" />
-        <div className="py-2" />
-        <button>
-          <div ref={googleSignInButton}></div>
-        </button>
-      </div>
+      {!userIsAuth.data?.userIsAuth ? (
+        <>
+          {" "}
+          <div className="p-8" />
+          <div className="border border-red-400 w-60 rounded-lg shadow flex flex-col items-center py-2">
+            <img className="h-16 w-16" src="/user.png" alt="" />
+            <div className="py-2" />
+            <button>
+              <div ref={googleSignInButton}></div>
+            </button>
+          </div>
+        </>
+      ) : null}
     </div>
   );
 };

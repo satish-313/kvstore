@@ -45,7 +45,6 @@ const isAuthed = t.middleware(({ next, ctx }) => {
 const userIsAuth = t.middleware(({ next, ctx }) => {
   const access = ctx.session.headers["authorization"];
   let Apayload: any;
-  let Rpayload: any;
 
   if (access) {
     try {

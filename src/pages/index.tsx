@@ -2,11 +2,12 @@ import { useState } from "react";
 import type { NextPage } from "next";
 import Head from "next/head";
 import { useRouter } from "next/router";
-import { Loading, MainModal, Projects } from "../components";
+import { Loading, MainModal, Projects, Signup } from "../components";
 import { trpc } from "../utils/trpc";
 
 const Home: NextPage = () => {
   const [toggle, setToggle] = useState(false);
+  const [signup, setSignup] = useState(false);
   const router = useRouter();
   const Iam = trpc.Iam.useQuery();
   const AddProject = trpc.addProject.useMutation({
@@ -24,6 +25,13 @@ const Home: NextPage = () => {
     setToggle(!toggle);
   };
 
+  const signupModal = (AfterLogin ?:boolean) => {
+    setSignup(!signup);
+    if(AfterLogin) {
+      router.reload()
+    }
+  };
+
   const addProject = (data: any) => {
     AddProject.mutate(data);
   };
@@ -32,16 +40,11 @@ const Home: NextPage = () => {
     DeleteProject.mutate({ _id });
   };
 
+  if (Iam.isLoading) return <Loading />;
+
   if (Iam.isError) {
     router.push("/500");
   }
-
-  if (Iam.data?.isAuth === false) {
-    // console.log(Iam.data, "index.tsx")
-    router.replace("/auth");
-  }
-
-  if (Iam.isLoading) return <Loading />;
 
   return (
     <div>
@@ -77,7 +80,34 @@ const Home: NextPage = () => {
             </div>
           </div>
         </>
-      ) : null}
+      ) : (
+        <div className="py-4">
+          <h3 className="font-mono font-semibold text-gray-700 ">
+            Welcome to protected store to storing environment{" "}
+          </h3>
+          <div className="grid grid-cols-4 gap-10">
+            <p className="mt-4 font-semibold text-green-700 col-span-4 sm:col-span-3">
+              Hey, fellow it's an free and opensource site to store your
+              sensetive environment variable without any worries. I garrenty
+              full security. You can store variable similar to .env file
+            </p>
+            <div className="hidden sm:block col-span-1">
+              <img className="rounded" src="./lock.gif" alt="" />
+            </div>
+          </div>
+
+          {signup ? <Signup signupModal={signupModal} /> : null}
+
+          <div className="mt-4">
+            <button
+              onClick={() => signupModal()}
+              className="bg-pink-700 hover:bg-red-700 py-2 px-4 block mx-auto font-semibold text-white rounded"
+            >
+              signup or singin
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

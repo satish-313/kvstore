@@ -15,12 +15,12 @@ export const createAccessToken = (id: string) => {
 
 
 
-export const setAccessToken = (s: string, from: string) => {
-  console.log("set access token", s, "from ", from);
+export const setAccessToken = (s: string, from?: string) => {
+  // console.log("set access token", s, "from ", from);
   accessToken = s;
 };
 
-export const getAccessToken = (from: string) => {
-  console.log("get access token ", accessToken, " from ", from);
+export const getAccessToken = (from?: string) => {
+  // console.log("get access token ", accessToken, " from ", from);
   return accessToken;
 }
