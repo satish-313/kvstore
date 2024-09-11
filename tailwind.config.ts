@@ -1,14 +1,13 @@
-import { type Config } from "tailwindcss";
-import { fontFamily } from "tailwindcss/defaultTheme";
+import type { Config } from "tailwindcss";
 
-export default {
-  content: ["./src/**/*.tsx"],
-  theme: {
-    extend: {
-      fontFamily: {
-        sans: ["var(--font-geist-sans)", ...fontFamily.sans],
-      },
+const config: Config = {
+    content: [
+        // Or if using `src` directory:
+        "./src/**/*.{js,ts,jsx,tsx,mdx}",
+    ],
+    theme: {
+        extend: {},
     },
-  },
-  plugins: [],
-} satisfies Config;
+    plugins: [],
+};
+export default config;
